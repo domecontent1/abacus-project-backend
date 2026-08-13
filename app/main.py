@@ -3,8 +3,18 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+# Update your CORS settings to include the Vercel link
+origins = [
+    "http://localhost:8100",
+    "https://abacus-project-frontend.vercel.app" # Add your Vercel URL here
+]
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins, # Use the list here
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def generate_abacus_logic(level, rows):
     nums = []
