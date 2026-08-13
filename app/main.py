@@ -11,7 +11,8 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins, # Use the list here
+    allow_origins=["*"],  # This allows any website to access your API
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
