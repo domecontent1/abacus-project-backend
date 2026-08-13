@@ -3,44 +3,78 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
-# Update your CORS settings to include the Vercel link
-origins = [
-    "http://localhost:8100",
-    "https://abacus-project-frontend.vercel.app" # Add your Vercel URL here
-]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # This allows any website to access your API
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-def generate_abacus_logic(level, rows):
+
+def generate_math(level: str, rows: int, digits: int):
     nums = []
     total = 0
 
-    for i in range(rows):
-        if level == "DIRECT":
-            # Numbers that don't require carries/formulas
-            # Simplified for now: 1-digit numbers that keep total < 9
-            val = random.randint(1, 4) if total < 5 else random.randint(-4, -1)
-            if total + val < 0 or total + val > 9: val = 1
-        else:
-            # Random for now, can be expanded with specific "Friend" logic later
-            val = random.randint(1, 9) if random.random() > 0.3 else random.randint(-9, -1)
-            if total + val < 0: val = abs(val)
+    # 2 digits means 10 to 99
+    low = 10 ** (digits - 1)
+    high = (10 ** digits) - 1
 
-        total += val
-        nums.append(val)
+    for _ in range(rows):
+        found = False
+        for _ in range(100):  # Try many times to find a valid number
+            val = random.randint(low, high)
+            if random.random() > 0.7: val = -val
+
+            if total + val < 0: continue
+
+            if level == "DIRECT":
+                # Check for carry-over in every digit column
+                # We check: can we add these two numbers without "friends" or "carries"?
+                s_total = str(total).zfill(digits)
+                s_val = str(abs(val)).zfill(digits)
+
+                is_direct = True
+                for t_char, v_char in zip(s_total, s_val):
+                    t_digit = int(t_char)
+                    v_digit = int(v_char)
+
+                    if val > 0:  # Addition check
+                        if t_digit + v_digit > 9: is_direct = False
+                    else:  # Subtraction check
+                        if t_digit - v_digit < 0: is_direct = False
+
+                if is_direct:
+                    total += val
+                    nums.append(val)
+                    found = True
+                    break
+            else:
+                # Level 2 or 3: Just ensure it doesn't go below zero
+                total += val
+                nums.append(val)
+                found = True
+                break
+
+        # If no 2-digit number fits the "Direct" rule,
+        # fallback to a safe 1-digit number so the game doesn't break
+        if not found:
+            safe_val = random.randint(1, 4)
+            if total - safe_val < 0:
+                total += safe_val; nums.append(safe_val)
+            else:
+                total -= safe_val; nums.append(-safe_val)
+
     return nums, total
 
 
+
+
 @app.get("/api/practice")
-async def get_practice(questions: int = 5, rows: int = 3, level: str = "DIRECT"):
+async def get_practice(questions: int = 5, rows: int = 3, level: str = "DIRECT", digits: int = 1):
     result = []
     for _ in range(questions):
-        problem, answer = generate_abacus_logic(level, rows)
+        problem, answer = generate_math(level, rows, digits)
         result.append({"problem": problem, "answer": answer})
     return {"questions": result}
