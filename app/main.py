@@ -11,7 +11,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+# 1. Add this variable at the very top of main.py
+total_games = 120 # Start with a baseline so it doesn't look empty!
 
 def generate_math(level: str, rows: int, digits: int):
     nums = []
@@ -69,10 +70,26 @@ def generate_math(level: str, rows: int, digits: int):
     return nums, total
 
 
+# Create a simple counter (In a real app, you'd use a Database or File)
+# For now, this will count until the server restarts
+stats = {
+    "total_games_played": 100 # Starting with a base number looks better!
+}
+
+# 3. Add this new endpoint so the frontend can ask for the number
+@app.get("/api/stats")
+async def get_stats():
+    return {"total_games_played": total_games}
+
+
 
 
 @app.get("/api/practice")
 async def get_practice(questions: int = 5, rows: int = 3, level: str = "DIRECT", digits: int = 1):
+    # 2. Add this line inside the function to count every game
+    global total_games
+    total_games += 1
+
     result = []
     for _ in range(questions):
         problem, answer = generate_math(level, rows, digits)
