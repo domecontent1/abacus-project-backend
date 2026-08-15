@@ -12,7 +12,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 # 1. Add this variable at the very top of main.py
-total_games = 120 # Start with a baseline so it doesn't look empty!
+# total_games = 120 # Start with a baseline so it doesn't look empty!
 
 def generate_math(level: str, rows: int, digits: int):
     nums = []
